@@ -57,6 +57,49 @@ deployment "my-nginx" deleted
 service "my-nginx-svc" deleted
 ```
 
+If you happen to organize your resources across several subdirectories within a particular directory, you can recursively perform the operations on the subdirectories too by specifying `--recursive` or `-R` alongside the `--filename,-f` flag.
+
+For instance, assume there is a directory `project/k8s/development` that holds all of the manifests needed for the development environment, organized by resource type:
+
+```
+project/k8s/development
+├── configmap
+│   └── my-configmap.yaml
+├── deployment
+│   └── my-deployment.yaml
+└── pvc
+    └── my-pvc.yaml
+```
+
+By default, performing a bulk operation on `project/k8s/development` will stop at the first level of the directory, not processing any subdirectories. If we tried to create the resources in this directory using the following command, we'd encounter an error: 
+
+```shell
+$ kubectl create -f project/k8s/development
+error: you must provide one or more resources by argument or filename (.json|.yaml|.yml|stdin)
+```
+
+Instead, specify the `--recursive` or `-R` flag with the `--filename,-f` flag as such:
+
+```shell
+$ kubectl create -f project/k8s/development --recursive
+configmap "my-config" created
+deployment "my-deployment" created
+persistentvolumeclaim "my-pvc" created
+```
+
+The `--recursive` flag works with any operation that accepts the `--filename,-f` flag such as: `kubectl {create,get,delete,describe,rollout} etc.`
+
+The `--recursive` flag also works when multiple `-f` arguments are provided:
+
+```shell
+$ kubectl create -f project/k8s/namespaces -f project/k8s/development --recursive
+namespace "development" created
+namespace "staging" created
+configmap "my-config" created
+deployment "my-deployment" created
+persistentvolumeclaim "my-pvc" created
+```
+
 In the case of just two resources, it's also easy to specify both on the command line using the resource/name syntax:
 
 ```shell
